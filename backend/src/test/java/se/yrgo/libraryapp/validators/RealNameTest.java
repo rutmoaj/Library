@@ -8,15 +8,34 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 public class RealNameTest {
 
-    @ParameterizedTest
-    @ValueSource(strings = { "dumbom", "attans", "TONÅRSFLINT" })
-    void validateRejectsBadWords(String name) {
+    @Test 
+    void testValidName(){
+        assertTrue(RealName.validate("Chevy Johansson"));
+    }
+
+    @ParameterizedTest 
+    @ValueSource(strings={"dumbom", "attans", "fasen"})
+    void testInvalidNames(String name){
         assertFalse(RealName.validate(name));
     }
 
     @Test
-    void validateAcceptValidNames() {
-        assertTrue(RealName.validate("Moa Johansson"));
+    void testInvalidNameLast(){
+        assertFalse(RealName.validate("Chevy Dumbom"));
     }
 
+    @Test 
+    void testInvalidNameFirst(){
+        assertFalse(RealName.validate("Stökis Devil"));
+    }
+
+    @Test 
+    void testInvalidWordInAnotherWord(){
+        assertFalse(RealName.validate("Maja Fyfasensson"));
+    }
+
+    @Test 
+    void testInvalidBigLetters(){
+        assertFalse(RealName.validate("ATTANS"));
+    }
 }
