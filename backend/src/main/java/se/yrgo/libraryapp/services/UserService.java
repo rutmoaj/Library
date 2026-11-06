@@ -32,4 +32,13 @@ public class UserService {
 
         return Optional.of(loginInfo.getUserId());
     }
+
+    public boolean register(String name, String realname, String password) {
+        String passwordHash = encoder.encode(password);
+
+        // handle names like Ian O'Toole
+        realname = realname.replace("'", "\\'");
+
+        return userDao.register(name, realname, passwordHash);
+    }
 }

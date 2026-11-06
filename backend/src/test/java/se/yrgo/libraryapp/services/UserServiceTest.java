@@ -1,6 +1,7 @@
 package se.yrgo.libraryapp.services;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -20,6 +21,8 @@ import se.yrgo.libraryapp.entities.UserId;
 public class UserServiceTest {
     @Mock
     private UserDao userDao;
+    @Mock
+    private UserService userService;
 
     @Test
     @SuppressWarnings("deprecation")
@@ -35,5 +38,16 @@ public class UserServiceTest {
         UserService userService = new UserService(userDao, encoder);
         assertThat(userService.validate(username,
                 password)).isEqualTo(Optional.of(id));
+    }
+
+    @Test
+    void testRegisterNameWithApostrophe() {
+        String username = "dylan43";
+        String realname = "Dylan O'Brien";
+        String password = "meepmorp64_";
+
+        when(userService.register(username, realname, password)).thenReturn(true);
+        assertTrue(userService.register(username, realname, password));
+
     }
 }
