@@ -23,7 +23,6 @@ public final class RealName {
         try (InputStream is = RealName.class.getClassLoader().getResourceAsStream("bad_words.txt");
                 BufferedReader reader =
                         new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-            
                 invalidWords.addAll(reader.lines().collect(Collectors.toSet()));
             
         } catch (IOException ex) {
@@ -42,7 +41,7 @@ public final class RealName {
      */
     public static boolean validate(String name) {
         String cleanName = Utils.cleanAndUnLeet(name);
-        String[] words = cleanName.split("\\W+");
+        String[] words = cleanName.split("[^\\p{L}]+");
         for (int i = 0; i < words.length; i++) {
             if (invalidWords.contains(words[i])) {
                 return false;
