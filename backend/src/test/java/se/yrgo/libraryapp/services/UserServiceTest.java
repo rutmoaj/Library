@@ -2,10 +2,7 @@ package se.yrgo.libraryapp.services;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -14,14 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.NullSource;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoSettings;
 
 import org.mockito.quality.Strictness;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import se.yrgo.libraryapp.dao.UserDao;
@@ -32,11 +27,13 @@ import se.yrgo.libraryapp.entities.UserId;
 public class UserServiceTest {
     @Mock
     private UserDao userDao;
-    @Mock
+
+    @SuppressWarnings("deprecation")
+    private final PasswordEncoder encoder = org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance();
+
     private UserService userService;
 
     @Test
-    @SuppressWarnings("deprecation")
     void correctLogin() {
         final String userId = "1";
         final UserId id = UserId.of(userId);
@@ -44,7 +41,6 @@ public class UserServiceTest {
         final String password = "password";
         final String passwordHash = "password";
         final LoginInfo info = new LoginInfo(id, passwordHash);
-        final PasswordEncoder encoder = org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance();
 
         when(userDao.getLoginInfo(username)).thenReturn(Optional.of(info));
 
@@ -62,7 +58,6 @@ public class UserServiceTest {
     @Test
     void testCorrectlyHashedPassword() {
         String rawPassword = "mickmous";
-        final PasswordEncoder encoder = new BCryptPasswordEncoder();
         final String hash = encoder.encode(rawPassword);
 
         assertNotEquals(rawPassword, hash);
@@ -71,24 +66,29 @@ public class UserServiceTest {
 
     // isNameAvailable
     @ParameterizedTest
-    @NullSource  
-    void testIsNameAvailableNullEmptyAndWhitespaceValue(String name){
+    @NullSource
+    void testIsNameAvailableNullEmptyAndWhitespaceValue(String name) {
+        userService = new UserService(userDao, encoder);
         assertFalse(userService.isNameAvailable(name));
     }
 
-    @ParameterizedTest 
-    @EmptySource 
-    void testIsNameAvailableEmptyValue(String name){
+    @ParameterizedTest
+    @EmptySource
+    void testIsNameAvailableEmptyValue(String name) {
+        userService = new UserService(userDao, encoder);
         assertFalse(userService.isNameAvailable(name));
     }
 
-    @Test 
-    void testIsNameAvailableTooShortValue(){
+    @Test
+    void testIsNameAvailableTooShortValue() {
+        userService = new UserService(userDao, encoder);
         assertFalse(userService.isNameAvailable("Bo"));
     }
 
-    @Test 
-    void testIsNameAvailableJustOverLimitValue(){
-        assertTrue(userService.isNameAvailable("Bob"));
+    @Test
+    void testIsNameAvailableJustOverLimitValue() {
+        userService = new UserService(userDao, encoder);
+        when(userDao.isNameAvailable("bob")).thenReturn(true);
+        assertTrue(userService.isNameAvailable("bob"));
     }
 }
