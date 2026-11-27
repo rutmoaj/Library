@@ -2,34 +2,42 @@ package se.yrgo.libraryapp.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Optional;
 import javax.sql.DataSource;
+
+import org.flywaydb.core.Flyway;
 import org.h2.jdbcx.JdbcDataSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import com.radcortez.flyway.test.annotation.H2;
+import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import se.yrgo.libraryapp.entities.LoginInfo;
 import se.yrgo.libraryapp.entities.User;
 import se.yrgo.libraryapp.entities.UserId;
 
 @Tag("integration")
-@H2
+@Testcontainers
 public class UserDaoIntegrationTest {
+    @Container
+    private static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0.29");
     private static DataSource ds;
 
     @BeforeAll
-    static void initDataSource() {
-        // this way we do not need to create a new datasource every time
-        final JdbcDataSource ds = new JdbcDataSource();
-        ds.setURL("jdbc:h2:mem:test");
-        UserDaoIntegrationTest.ds = ds;
+    static void setup() {
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(mysql.getJdbcUrl());
+        hikariConfig.setUsername(mysql.getUsername());
+        hikariConfig.setPassword(mysql.getPassword());
+        hikariConfig.setDriverClassName(mysql.getDriverClassName());
+        UserDaoIntegrationTest.ds = new HikariDataSource(hikariConfig);
+        Flyway flyway = Flyway.configure().dataSource(ds).load();
+        flyway.migrate();
     }
 
     @Test
@@ -66,14 +74,14 @@ public class UserDaoIntegrationTest {
     }
 
     @Test
-    void getLoginInfoNotFound(){
+    void getLoginInfoNotFound() {
         UserDao userDao = new UserDao(ds);
 
         assertThat(userDao.getLoginInfo("Asmodeus")).isEmpty();
     }
 
     @Test
-    void registerUser(){
+    void registerUser() {
         UserDao userDao = new UserDao(ds);
         assertTrue(userDao.register("Bim", "bom", "bam"));
 
